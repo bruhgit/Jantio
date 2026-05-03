@@ -2,6 +2,7 @@ package com.jantio.ui.javafx;
 
 import com.jantio.core.model.JantioComponent;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -49,11 +50,9 @@ public class JavaFXRenderer {
             }
             
             // Set enabled/visible
-            if (fxNode instanceof Node node) {
-                node.setVisible(comp.isVisible());
-                if (!comp.isEnabled() && fxNode instanceof Control control) {
-                    control.setDisable(true);
-                }
+            fxNode.setVisible(comp.isVisible());
+            if (!comp.isEnabled() && fxNode instanceof Control control) {
+                control.setDisable(true);
             }
             
             // Set colors
