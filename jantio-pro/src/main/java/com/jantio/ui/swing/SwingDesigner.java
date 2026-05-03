@@ -179,7 +179,11 @@ public class SwingDesigner extends JFrame {
         canvas.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                selectComponentAt(e.getPoint());
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    showContextMenu(e);
+                } else {
+                    selectComponentAt(e.getPoint());
+                }
             }
         });
         
@@ -220,23 +224,80 @@ public class SwingDesigner extends JFrame {
         });
     }
     
+    /**
+     * Show context menu for resizing component on right-click
+     */
+    private void showContextMenu(MouseEvent e) {
+        if (selectedComponent == null) return;
+        
+        JPopupMenu popup = new JPopupMenu();
+        
+        // Resize menu items
+        JMenuItem resizeSmall = new JMenuItem("Resize: Small (80x30)");
+        resizeSmall.addActionListener(ev -> {
+            selectedComponent.setSize(80, 30);
+            refreshCanvas();
+            propertiesPanel.updateFields();
+        });
+        
+        JMenuItem resizeMedium = new JMenuItem("Resize: Medium (150x50)");
+        resizeMedium.addActionListener(ev -> {
+            selectedComponent.setSize(150, 50);
+            refreshCanvas();
+            propertiesPanel.updateFields();
+        });
+        
+        JMenuItem resizeLarge = new JMenuItem("Resize: Large (250x80)");
+        resizeLarge.addActionListener(ev -> {
+            selectedComponent.setSize(250, 80);
+            refreshCanvas();
+            propertiesPanel.updateFields();
+        });
+        
+        JMenuItem customSize = new JMenuItem("Custom Size...");
+        customSize.addActionListener(ev -> {
+            String widthStr = JOptionPane.showInputDialog(this, 
+                "Enter width:", selectedComponent.getWidth());
+            String heightStr = JOptionPane.showInputDialog(this, 
+                "Enter height:", selectedComponent.getHeight());
+            
+            try {
+                int w = Integer.parseInt(widthStr);
+                int h = Integer.parseInt(heightStr);
+                if (w > 0 && h > 0) {
+                    selectedComponent.setSize(w, h);
+                    refreshCanvas();
+                    propertiesPanel.updateFields();
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Invalid size values",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        popup.add(resizeSmall);
+        popup.add(resizeMedium);
+        popup.add(resizeLarge);
+        popup.addSeparator();
+        popup.add(customSize);
+        
+        popup.show(canvas, e.getX(), e.getY());
+    }
+    
     private void addComponent(String type) {
         try {
             JantioComponent.ComponentType compType = JantioComponent.ComponentType.valueOf(type.toUpperCase().replace(" ", "_"));
             JantioComponent comp = engine.createComponent(compType);
             
-            // Find non-overlapping position
+            // Find non-overlapping position with better collision detection
             Point pos = findNonOverlappingPosition(comp.getWidth(), comp.getHeight());
             comp.setLocation(pos.x, pos.y);
             
             refreshCanvas();
             propertiesPanel.setComponent(comp);
             selectedComponent = comp;
-            
-            JOptionPane.showMessageDialog(this, 
-                "Added: " + type + " at (" + pos.x + ", " + pos.y + ")",
-                "Component Added",
-                JOptionPane.INFORMATION_MESSAGE);
         } catch (IllegalArgumentException ex) {
             JOptionPane.showMessageDialog(this,
                 "Unknown component type: " + type,
@@ -245,18 +306,34 @@ public class SwingDesigner extends JFrame {
         }
     }
     
+    /**
+     * Find a position that doesn't overlap with existing components
+     * Uses improved collision detection with padding
+     */
     private Point findNonOverlappingPosition(int width, int height) {
         List<JantioComponent> components = engine.getComponents();
+        int padding = 10; // Add padding between components
         int x = 10;
         int y = 10;
-        int step = 10;
+        int step = 15;
+        int maxY = canvas.getHeight() - 100;
         
-        while (x + width < canvas.getWidth() - 50) {
+        // Try to find a position without overlap
+        while (y < maxY) {
             boolean overlap = false;
             Rectangle newRect = new Rectangle(x, y, width, height);
             
             for (JantioComponent comp : components) {
-                if (comp.getBounds().intersects(newRect)) {
+                // Create expanded bounds for collision detection with padding
+                Rectangle compBounds = comp.getBounds();
+                Rectangle expandedBounds = new Rectangle(
+                    compBounds.x - padding,
+                    compBounds.y - padding,
+                    compBounds.width + (2 * padding),
+                    compBounds.height + (2 * padding)
+                );
+                
+                if (expandedBounds.intersects(newRect)) {
                     overlap = true;
                     break;
                 }
@@ -273,7 +350,65 @@ public class SwingDesigner extends JFrame {
             }
         }
         
-        return new Point(x, y);
+        // If no space found, place at bottom with offset
+        int newY = 10;
+        for (JantioComponent comp : components) {
+            int bottomY = comp.getY() + comp.getHeight() + padding;
+            if (bottomY > newY) {
+                newY = bottomY;
+            }
+        }
+        return new Point(10, newY);
+    }
+    
+    /**
+     * Check if a component overlaps with any other component
+     */
+    private boolean hasOverlap(JantioComponent comp, JantioComponent exclude) {
+        Rectangle rect1 = comp.getBounds();
+        for (JantioComponent other : engine.getComponents()) {
+            if (other == exclude) continue;
+            if (rect1.intersects(other.getBounds())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Auto-separate overlapping components
+     */
+    private void separateOverlappingComponents() {
+        List<JantioComponent> components = engine.getComponents();
+        int padding = 5;
+        boolean changed = true;
+        int iterations = 0;
+        int maxIterations = 100;
+        
+        while (changed && iterations < maxIterations) {
+            changed = false;
+            iterations++;
+            
+            for (int i = 0; i < components.size(); i++) {
+                JantioComponent comp1 = components.get(i);
+                
+                for (int j = i + 1; j < components.size(); j++) {
+                    JantioComponent comp2 = components.get(j);
+                    
+                    if (comp1.getBounds().intersects(comp2.getBounds())) {
+                        // Move comp2 down and right to separate
+                        int newX = comp2.getX() + padding;
+                        int newY = comp2.getY() + padding;
+                        comp2.setLocation(newX, newY);
+                        changed = true;
+                    }
+                }
+            }
+        }
+        
+        if (iterations >= maxIterations) {
+            System.out.println("Warning: Max iterations reached while separating components");
+        }
     }
     
     private void selectComponentAt(Point point) {
@@ -574,6 +709,13 @@ public class SwingDesigner extends JFrame {
                 widthField.setText(String.valueOf(comp.getWidth()));
                 heightField.setText(String.valueOf(comp.getHeight()));
             }
+        }
+        
+        /**
+         * Update fields from component properties
+         */
+        public void updateFields() {
+            setComponent(component);
         }
         
         public void clear() {
