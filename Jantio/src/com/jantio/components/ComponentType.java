@@ -39,6 +39,10 @@ public enum ComponentType {
         return displayName;
     }
     
+    public String getDefaultName() {
+        return displayName.toLowerCase() + java.util.UUID.randomUUID().toString().substring(0, 4);
+    }
+    
     public Class<?> getSwingClass() {
         return swingClass;
     }
