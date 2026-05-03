@@ -1,30 +1,38 @@
 ```
-# Compiled Java classes
+# Java/Maven specific ignores
+target/
 *.class
-
-# Build output directory
-out/
+*.jar
+*.war
+*.ear
 
 # Dependencies
 lib/
 libs/
 
-# IDE files
-.vscode/
+# IDE specific
 .idea/
 *.iml
 *.ipr
 *.iws
+.vscode/
+
+# Build artifacts
+build/
+dist/
+out/
 
 # Logs
 *.log
 
-# Environment
-.env
-.env.local
-*.env.*
+# Temp files
+*.tmp
+*.temp
 
-# OS generated files
+# OS specific
 .DS_Store
 Thumbs.db
+
+# Local configuration
+local.properties
 ```
