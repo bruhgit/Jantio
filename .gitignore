@@ -1,38 +1,38 @@
 ```
-# Java/Maven specific ignores
-target/
+# Compiled files
 *.class
-*.jar
-*.war
-*.ear
+*.o
+*.obj
+*.out
+
+# Build artifacts
+build/
+target/
 
 # Dependencies
 lib/
 libs/
 
-# IDE specific
-.idea/
-*.iml
-*.ipr
-*.iws
-.vscode/
-
-# Build artifacts
-build/
-dist/
-out/
-
 # Logs
 *.log
 
-# Temp files
+# Temporary files
 *.tmp
-*.temp
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # OS specific
 .DS_Store
 Thumbs.db
-
-# Local configuration
-local.properties
 ```

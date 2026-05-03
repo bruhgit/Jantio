@@ -2,6 +2,11 @@ package com.jantio.ui;
 
 import com.jantio.components.ComponentType;
 import com.jantio.components.DesignerComponent;
+import com.jantio.exporter.CodeExporter;
+import com.jantio.exporter.JavaCodeExporter;
+import com.jantio.exporter.KotlinCodeExporter;
+import com.jantio.utils.ColorPalette;
+import com.jantio.utils.FontHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,10 +21,12 @@ public class MainWindow extends JFrame {
     private JantioDesigner designer;
     private PropertiesPanel propertiesPanel;
     private ComponentPalette componentPalette;
+    private CodeExporter currentExporter;
     
     public MainWindow() {
         initComponents();
         setupWindow();
+        currentExporter = new JavaCodeExporter(); // Varsayılan olarak Java
     }
     
     private void initComponents() {
@@ -43,51 +50,82 @@ public class MainWindow extends JFrame {
         // Split panes
         JSplitPane leftSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, componentPalette, designerScroll);
         leftSplit.setDividerLocation(200);
+        leftSplit.setBackground(ColorPalette.BACKGROUND_LIGHT);
         
         JSplitPane mainSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSplit, propertiesPanel);
         mainSplit.setDividerLocation(800);
+        mainSplit.setBackground(ColorPalette.BACKGROUND_LIGHT);
         
         add(mainSplit, BorderLayout.CENTER);
     }
     
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-        menuBar.setBackground(new Color(35, 35, 45));
+        menuBar.setBackground(ColorPalette.BACKGROUND_MEDIUM);
+        menuBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ColorPalette.BORDER));
         
         // File menüsü
         JMenu fileMenu = new JMenu("Dosya");
-        fileMenu.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        fileMenu.setForeground(new Color(200, 200, 220));
+        fileMenu.setFont(FontHelper.createRegular(12));
+        fileMenu.setForeground(ColorPalette.TEXT_PRIMARY);
         
         JMenuItem newItem = new JMenuItem("Yeni");
-        newItem.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        newItem.setFont(FontHelper.createRegular(11));
         newItem.addActionListener(e -> designer.clearAll());
         
-        JMenuItem exportItem = new JMenuItem("Kod Export Et...");
-        exportItem.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        exportItem.addActionListener(e -> exportCode());
+        // Export menüsü
+        JMenu exportMenu = new JMenu("Kod Export Et");
+        exportMenu.setFont(FontHelper.createRegular(11));
+        
+        JMenuItem exportJavaItem = new JMenuItem("Java Olarak");
+        exportJavaItem.setFont(FontHelper.createRegular(11));
+        exportJavaItem.addActionListener(e -> {
+            currentExporter = new JavaCodeExporter();
+            exportCode();
+        });
+        
+        JMenuItem exportKotlinItem = new JMenuItem("Kotlin Olarak");
+        exportKotlinItem.setFont(FontHelper.createRegular(11));
+        exportKotlinItem.addActionListener(e -> {
+            currentExporter = new KotlinCodeExporter();
+            exportCode();
+        });
+        
+        exportMenu.add(exportJavaItem);
+        exportMenu.add(exportKotlinItem);
+        
+        JMenuItem saveProjectItem = new JMenuItem("Projeyi Kaydet...");
+        saveProjectItem.setFont(FontHelper.createRegular(11));
+        saveProjectItem.addActionListener(e -> saveProject());
+        
+        JMenuItem openProjectItem = new JMenuItem("Proje Aç...");
+        openProjectItem.setFont(FontHelper.createRegular(11));
+        openProjectItem.addActionListener(e -> openProject());
         
         JMenuItem exitItem = new JMenuItem("Çıkış");
-        exitItem.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        exitItem.setFont(FontHelper.createRegular(11));
         exitItem.addActionListener(e -> System.exit(0));
         
         fileMenu.add(newItem);
         fileMenu.addSeparator();
-        fileMenu.add(exportItem);
+        fileMenu.add(saveProjectItem);
+        fileMenu.add(openProjectItem);
+        fileMenu.addSeparator();
+        fileMenu.add(exportMenu);
         fileMenu.addSeparator();
         fileMenu.add(exitItem);
         
         // Edit menüsü
         JMenu editMenu = new JMenu("Düzenle");
-        editMenu.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        editMenu.setForeground(new Color(200, 200, 220));
+        editMenu.setFont(FontHelper.createRegular(12));
+        editMenu.setForeground(ColorPalette.TEXT_PRIMARY);
         
         JMenuItem deleteItem = new JMenuItem("Seçili Bileşeni Sil");
-        deleteItem.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        deleteItem.setFont(FontHelper.createRegular(11));
         deleteItem.addActionListener(e -> designer.removeSelectedComponent());
         
         JMenuItem clearItem = new JMenuItem("Tümünü Temizle");
-        clearItem.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        clearItem.setFont(FontHelper.createRegular(11));
         clearItem.addActionListener(e -> designer.clearAll());
         
         editMenu.add(deleteItem);
@@ -95,11 +133,11 @@ public class MainWindow extends JFrame {
         
         // Help menüsü
         JMenu helpMenu = new JMenu("Yardım");
-        helpMenu.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        helpMenu.setForeground(new Color(200, 200, 220));
+        helpMenu.setFont(FontHelper.createRegular(12));
+        helpMenu.setForeground(ColorPalette.TEXT_PRIMARY);
         
         JMenuItem aboutItem = new JMenuItem("Hakkında");
-        aboutItem.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        aboutItem.setFont(FontHelper.createRegular(11));
         aboutItem.addActionListener(e -> showAbout());
         
         helpMenu.add(aboutItem);
@@ -128,13 +166,13 @@ public class MainWindow extends JFrame {
             className = "MyForm";
         }
         
-        String code = designer.generateCode(className);
+        String code = currentExporter.generateCode(className, designer.getDesignerComponents());
         
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Java Dosyasını Kaydet");
-        fileChooser.setSelectedFile(new java.io.File(className + ".java"));
+        fileChooser.setDialogTitle(currentExporter.getLanguageName() + " Dosyasını Kaydet");
+        fileChooser.setSelectedFile(new java.io.File(className + "." + currentExporter.getFileExtension()));
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-            "Java Files", "java"
+            currentExporter.getLanguageName() + " Files", currentExporter.getFileExtension()
         ));
         
         int userSelection = fileChooser.showSaveDialog(this);
@@ -144,7 +182,7 @@ public class MainWindow extends JFrame {
                 writer.write(code);
                 JOptionPane.showMessageDialog(
                     this,
-                    "Kod başarıyla kaydedildi!",
+                    currentExporter.getLanguageName() + " kodu başarıyla kaydedildi!",
                     "Başarılı",
                     JOptionPane.INFORMATION_MESSAGE
                 );
@@ -159,6 +197,24 @@ public class MainWindow extends JFrame {
         }
     }
     
+    private void saveProject() {
+        JOptionPane.showMessageDialog(
+            this,
+            "Proje kaydetme özelliği yakında eklenecek.",
+            "Bilgi",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+    
+    private void openProject() {
+        JOptionPane.showMessageDialog(
+            this,
+            "Proje açma özelliği yakında eklenecek.",
+            "Bilgi",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+    
     private void showAbout() {
         StringBuilder aboutText = new StringBuilder();
         aboutText.append("<html><body style='font-family: Segoe UI; padding: 20px;'>");
@@ -167,11 +223,12 @@ public class MainWindow extends JFrame {
         aboutText.append("<p>Modern ve profesyonel Java Swing arayüzleri tasarlamak için geliştirilmiş sürükle-bırak tabanlı GUI oluşturucu.</p>");
         aboutText.append("<h3>Özellikler:</h3>");
         aboutText.append("<ul>");
-        aboutText.append("<li>10 farklı Swing bileşeni desteği</li>");
+        aboutText.append("<li>11 farklı Swing bileşeni desteği</li>");
         aboutText.append("<li>Sürükle-bırak ile kolay tasarım</li>");
         aboutText.append("<li>Gerçek zamanlı özellik düzenleme</li>");
-        aboutText.append("<li>Java koduna otomatik dönüştürme</li>");
+        aboutText.append("<li>Java ve Kotlin koduna otomatik dönüştürme</li>");
         aboutText.append("<li>Modern karanlık tema</li>");
+        aboutText.append("<li>JetBrains tarzı splash screen</li>");
         aboutText.append("</ul>");
         aboutText.append("<p style='color: #646478; margin-top: 20px;'>© 2024 Jantio Team</p>");
         aboutText.append("</body></html>");
@@ -188,7 +245,7 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
         
         // Modern görünüm
-        getContentPane().setBackground(new Color(35, 35, 45));
+        getContentPane().setBackground(ColorPalette.BACKGROUND_LIGHT);
         
         // Pencere ikonları için (isteğe bağlı)
         try {

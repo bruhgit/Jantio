@@ -1,39 +1,16 @@
 #!/bin/bash
 
 # Jantio Build Script
+echo "Jantio - Building..."
 
-echo "==================================="
-echo "  JANTIO - Java GUI Builder"
-echo "  Build Script"
-echo "==================================="
-echo ""
+# Temizle
+rm -rf out/production/jantio
+mkdir -p out/production/jantio
 
-# Check if Maven is installed
-if ! command -v mvn &> /dev/null; then
-    echo "Maven bulunamadı! Lütfen Maven yükleyin."
-    echo "Ubuntu/Debian: sudo apt install maven"
-    echo "macOS: brew install maven"
-    echo "Windows: https://maven.apache.org/download.cgi"
-    exit 1
-fi
+# Derle
+find src -name "*.java" | xargs javac -d out/production/jantio -encoding UTF-8
 
-echo "Maven bulundu: $(mvn --version | head -1)"
-echo ""
+# JAR oluştur
+jar cfe jantio.jar com.jantio.JantioApp -C out/production/jantio .
 
-# Clean and build
-echo "Proje temizleniyor ve derleniyor..."
-mvn clean package -q
-
-if [ $? -eq 0 ]; then
-    echo ""
-    echo "✓ Başarıyla derlendi!"
-    echo ""
-    echo "Çıktı dosyası: target/jantio-1.0.0-jar-with-dependencies.jar"
-    echo ""
-    echo "Uygulamayı çalıştırmak için:"
-    echo "  java -jar target/jantio-1.0.0-jar-with-dependencies.jar"
-else
-    echo ""
-    echo "✗ Derleme başarısız!"
-    exit 1
-fi
+echo "Build completed! Run with: java -jar jantio.jar"

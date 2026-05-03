@@ -260,4 +260,80 @@ public class DesignerComponent {
         
         return code.toString();
     }
+    
+    /**
+     * Kotlin kodu üretir
+     */
+    public String generateKotlinCode(String variableName) {
+        StringBuilder code = new StringBuilder();
+        
+        switch (type) {
+            case BUTTON:
+                code.append(String.format("val %s = JButton(\"%s\")%n", 
+                    variableName, ((JButton) component).getText()));
+                break;
+            case LABEL:
+                code.append(String.format("val %s = JLabel(\"%s\")%n", 
+                    variableName, ((JLabel) component).getText()));
+                break;
+            case TEXT_FIELD:
+                code.append(String.format("val %s = JTextField(\"%s\")%n", 
+                    variableName, ((JTextField) component).getText()));
+                break;
+            case TEXT_AREA:
+                JTextArea textArea = (JTextArea) ((JScrollPane) component).getViewport().getView();
+                code.append(String.format("val %s = JTextArea(\"%s\")%n", 
+                    variableName, textArea.getText()));
+                code.append(String.format("%s.rows = %d%n", variableName, textArea.getRows()));
+                code.append(String.format("%s.columns = %d%n", variableName, textArea.getColumns()));
+                code.append(String.format("val %sScroll = JScrollPane(%s)%n", 
+                    variableName, variableName));
+                break;
+            case CHECK_BOX:
+                code.append(String.format("val %s = JCheckBox(\"%s\")%n", 
+                    variableName, ((JCheckBox) component).getText()));
+                break;
+            case RADIO_BUTTON:
+                code.append(String.format("val %s = JRadioButton(\"%s\")%n", 
+                    variableName, ((JRadioButton) component).getText()));
+                break;
+            case COMBO_BOX:
+                @SuppressWarnings("unchecked")
+                JComboBox<String> comboBox = (JComboBox<String>) component;
+                code.append(String.format("val %sItems = arrayOf(", variableName));
+                for (int i = 0; i < comboBox.getItemCount(); i++) {
+                    if (i > 0) code.append(", ");
+                    code.append("\"").append(comboBox.getItemAt(i)).append("\"");
+                }
+                code.append(")%n");
+                code.append(String.format("val %s = JComboBox(%sItems)%n", 
+                    variableName, variableName));
+                break;
+            case PANEL:
+                code.append(String.format("val %s = JPanel()%n", variableName));
+                code.append(String.format("%s.layout = null%n", variableName));
+                break;
+            case SLIDER:
+                JSlider slider = (JSlider) component;
+                code.append(String.format("val %s = JSlider(%d, %d, %d)%n", 
+                    variableName, slider.getMinimum(), slider.getMaximum(), slider.getValue()));
+                break;
+            case PROGRESS_BAR:
+                code.append(String.format("val %s = JProgressBar()%n", variableName));
+                code.append(String.format("%s.value = %d%n", variableName, ((JProgressBar) component).getValue()));
+                break;
+            case SPINNER:
+                code.append(String.format("val %s = JSpinner()%n", variableName));
+                break;
+        }
+        
+        code.append(String.format("%s.setBounds(%d, %d, %d, %d)%n", 
+            variableName, x, y, width, height));
+        
+        if (!component.isEnabled()) {
+            code.append(String.format("%s.isEnabled = false%n", variableName));
+        }
+        
+        return code.toString();
+    }
 }
