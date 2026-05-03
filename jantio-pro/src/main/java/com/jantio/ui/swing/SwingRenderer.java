@@ -4,8 +4,14 @@ import com.jantio.core.engine.JantioEngine;
 import com.jantio.core.model.JantioComponent;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.text.JTextComponent;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.border.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Vector;
 
 /**
  * Swing Renderer - Renders Jantio components to Swing UI
@@ -122,7 +128,7 @@ public class SwingRenderer {
             case COMBO_BOX -> {
                 Object items = comp.getProperty("items");
                 if (items instanceof String[] itemArray && swingComp instanceof JComboBox) {
-                    JComboBox<?> comboBox = (JComboBox<?>) swingComp;
+                    JComboBox<String> comboBox = (JComboBox<String>) swingComp;
                     comboBox.removeAllItems();
                     for (String item : itemArray) {
                         comboBox.addItem(item);
@@ -132,9 +138,11 @@ public class SwingRenderer {
             case LIST -> {
                 Object items = comp.getProperty("items");
                 if (items instanceof String[] itemArray) {
-                    JList<?> list = findChildComponent(swingComp, JList.class);
+                    JList<String> list = findChildComponent(swingComp, JList.class);
                     if (list != null) {
-                        list.setListData(itemArray);
+                        for (String item : itemArray) {
+                            ((javax.swing.DefaultListModel<String>) list.getModel()).addElement(item);
+                        }
                     }
                 }
             }

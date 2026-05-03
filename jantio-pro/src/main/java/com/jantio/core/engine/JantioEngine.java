@@ -47,7 +47,7 @@ public class JantioEngine {
         this.javaGenerator = new JavaCodeGenerator(this);
         this.kotlinGenerator = new KotlinCodeGenerator(this);
         this.swingRenderer = new SwingRenderer(this);
-        this.javaFXRenderer = new JavaFXRenderer(this);
+        this.javaFXRenderer = null; // JavaFX not available in headless mode
         this.currentRenderTarget = RenderTarget.JAVA_SWING;
         this.projectName = "JantioProject";
         this.packageName = "com.example";
@@ -56,6 +56,37 @@ public class JantioEngine {
     }
     
     // Component Management
+    public JantioComponent createComponent(JantioComponent.ComponentType type) {
+        JantioComponent comp = new JantioComponent(type);
+        addComponent(comp);
+        return comp;
+    }
+    
+    public void setCanvasSize(java.awt.Dimension size) {
+        // Store canvas size for bounds checking if needed
+        logger.debug("Canvas size set to: {}x{}", size.width, size.height);
+    }
+    
+    public void newProject() {
+        clearAllComponents();
+        setProjectName("NewProject");
+        logger.info("New project created");
+    }
+    
+    public void loadProject(String path) throws Exception {
+        // TODO: Implement project loading from file
+        logger.info("Loading project from: {}", path);
+        throw new UnsupportedOperationException("Load project not yet implemented");
+    }
+    
+    public void saveProject(String path) throws java.io.IOException {
+        // Save as JSON
+        String json = generateJSON();
+        try (java.io.FileWriter writer = new java.io.FileWriter(path)) {
+            writer.write(json);
+        }
+        logger.info("Project saved to: {}", path);
+    }
     public void addComponent(JantioComponent component) {
         if (component == null) {
             logger.warn("Attempted to add null component");
@@ -193,9 +224,11 @@ public class JantioEngine {
         swingRenderer.render(container, components);
     }
     
-    public void renderToJavaFX(javafx.scene.Parent parent) {
+    public void renderToJavaFX(javafx.scene.layout.Pane parent) {
         logger.debug("Rendering {} components to JavaFX", components.size());
-        javaFXRenderer.render(parent, components);
+        if (javaFXRenderer != null) {
+            javaFXRenderer.render(parent, components);
+        }
     }
     
     public void setRenderTarget(RenderTarget target) {

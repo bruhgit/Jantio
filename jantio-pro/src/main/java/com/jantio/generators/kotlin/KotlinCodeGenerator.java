@@ -3,6 +3,7 @@ package com.jantio.generators.kotlin;
 import com.jantio.core.engine.JantioEngine;
 import com.jantio.core.model.JantioComponent;
 
+import java.awt.Color;
 import java.util.List;
 
 /**
@@ -16,215 +17,256 @@ public class KotlinCodeGenerator {
     }
     
     public String generateFullClass() {
-        val code = StringBuilder()
+        StringBuilder code = new StringBuilder();
         
         // Package declaration
-        code.append("package ${engine.packageName}\n\n")
+        code.append("package ").append(engine.getPackageName()).append("\n\n");
         
         // Imports
-        code.append(generateImports())
+        code.append(generateImports());
         
         // Class declaration
-        code.append("class ${engine.projectName} : JFrame() {\n\n")
+        code.append("class ").append(engine.getProjectName()).append(" : JFrame() {\n\n");
         
         // Component declarations
-        code.append(generateComponentDeclarations())
+        code.append(generateComponentDeclarations());
         
         // Constructor (init block)
-        code.append(generateConstructor())
+        code.append(generateConstructor());
         
         // Initialization method
-        code.append(generateInitializeComponents())
+        code.append(generateInitializeComponents());
         
         // Event handlers
-        code.append(generateEventHandlers())
+        code.append(generateEventHandlers());
         
         // Companion object with main
-        code.append(generateMainMethod())
+        code.append(generateMainMethod());
         
-        code.append("}\n")
+        code.append("}\n");
         
-        return code.toString()
+        return code.toString();
     }
     
-    private String generateImports() = buildString {
-        append("import javax.swing.*\n")
-        append("import javax.swing.border.*\n")
-        append("import java.awt.*\n")
-        append("import java.awt.event.*\n\n")
+    private String generateImports() {
+        StringBuilder imports = new StringBuilder();
+        imports.append("import javax.swing.*\n");
+        imports.append("import javax.swing.border.*\n");
+        imports.append("import java.awt.*\n");
+        imports.append("import java.awt.event.*\n\n");
+        return imports.toString();
     }
     
-    private String generateComponentDeclarations(): String {
-        val declarations = StringBuilder()
-        val components = engine.components
+    private String generateComponentDeclarations() {
+        StringBuilder declarations = new StringBuilder();
+        List<JantioComponent> components = engine.getComponents();
         
-        for (comp in components) {
-            if (comp.type.isLayout) continue
+        for (JantioComponent comp : components) {
+            if (comp.getType().isLayout()) continue;
             
-            val type = comp.type.className
-            val name = comp.name
-            declarations.append("    private lateinit var $name: $type\n")
+            String type = comp.getType().getClassName();
+            String name = comp.getName();
+            declarations.append("    private lateinit var ").append(name).append(": ").append(type).append("\n");
         }
         
-        if (components.isNotEmpty()) {
-            declarations.append("\n")
+        if (!components.isEmpty()) {
+            declarations.append("\n");
         }
         
-        return declarations.toString()
+        return declarations.toString();
     }
     
-    private String generateConstructor(): String = buildString {
-        append("    init {\n")
-        append("        title = \"${engine.projectName}\"\n")
-        append("        defaultCloseOperation = EXIT_ON_CLOSE\n")
-        append("        setSize(800, 600)\n")
-        append("        locationRelativeTo = null\n")
-        append("        layout = null\n")
-        append("        \n")
-        append("        initializeComponents()\n")
-        append("    }\n\n")
+    private String generateConstructor() {
+        StringBuilder constructor = new StringBuilder();
+        constructor.append("    init {\n");
+        constructor.append("        title = \"").append(engine.getProjectName()).append("\"\n");
+        constructor.append("        defaultCloseOperation = EXIT_ON_CLOSE\n");
+        constructor.append("        setSize(800, 600)\n");
+        constructor.append("        locationRelativeTo = null\n");
+        constructor.append("        layout = null\n");
+        constructor.append("        \n");
+        constructor.append("        initializeComponents()\n");
+        constructor.append("    }\n\n");
+        return constructor.toString();
     }
     
-    private String generateInitializeComponents(): String {
-        val init = StringBuilder()
-        init.append("    private fun initializeComponents() {\n")
+    private String generateInitializeComponents() {
+        StringBuilder init = new StringBuilder();
+        init.append("    private fun initializeComponents() {\n");
         
-        val components = engine.components
+        List<JantioComponent> components = engine.getComponents();
         
-        for (comp in components) {
-            if (comp.type.isLayout) continue
+        for (JantioComponent comp : components) {
+            if (comp.getType().isLayout()) continue;
             
-            init.append("        // Initialize ${comp.name}\n")
-            init.append("        ${comp.name} = ${comp.type.className}()\n")
+            init.append("        // Initialize ").append(comp.getName()).append("\n");
+            init.append("        ").append(comp.getName()).append(" = ").append(comp.getType().getClassName()).append("()\n");
             
             // Set bounds
-            init.append("        ${comp.name}.setBounds(${comp.x}, ${comp.y}, ${comp.width}, ${comp.height})\n")
+            init.append("        ").append(comp.getName()).append(".setBounds(")
+                .append(comp.getX()).append(", ").append(comp.getY()).append(", ")
+                .append(comp.getWidth()).append(", ").append(comp.getHeight()).append(")\n");
             
             // Set text if applicable
-            if (!comp.text.isNullOrEmpty()) {
-                init.append("        ${comp.name}.text = \"${escapeString(comp.text)}\"\n")
+            if (comp.getText() != null && !comp.getText().isEmpty()) {
+                init.append("        ").append(comp.getName()).append(".text = \"")
+                    .append(escapeString(comp.getText())).append("\"\n");
             }
             
             // Set tool tip
-            if (!comp.toolTipText.isNullOrEmpty()) {
-                init.append("        ${comp.name}.toolTipText = \"${escapeString(comp.toolTipText)}\"\n")
+            if (comp.getToolTipText() != null && !comp.getToolTipText().isEmpty()) {
+                init.append("        ").append(comp.getName()).append(".toolTipText = \"")
+                    .append(escapeString(comp.getToolTipText())).append("\"\n");
             }
             
             // Set enabled/visible
-            if (!comp.enabled) {
-                init.append("        ${comp.name}.isEnabled = false\n")
+            if (!comp.isEnabled()) {
+                init.append("        ").append(comp.getName()).append(".isEnabled = false\n");
             }
-            if (!comp.visible) {
-                init.append("        ${comp.name}.isVisible = false\n")
+            if (!comp.isVisible()) {
+                init.append("        ").append(comp.getName()).append(".isVisible = false\n");
             }
             
             // Set colors
-            if (comp.backgroundColor != null) {
-                init.append("        ${comp.name}.background = Color(${comp.backgroundColor.red}, ${comp.backgroundColor.green}, ${comp.backgroundColor.blue})\n")
+            if (comp.getBackgroundColor() != null) {
+                Color bg = comp.getBackgroundColor();
+                init.append("        ").append(comp.getName()).append(".background = Color(")
+                    .append(bg.getRed()).append(", ").append(bg.getGreen()).append(", ")
+                    .append(bg.getBlue()).append(")\n");
             }
-            if (comp.foregroundColor != null) {
-                init.append("        ${comp.name}.foreground = Color(${comp.foregroundColor.red}, ${comp.foregroundColor.green}, ${comp.foregroundColor.blue})\n")
+            if (comp.getForegroundColor() != null) {
+                Color fg = comp.getForegroundColor();
+                init.append("        ").append(comp.getName()).append(".foreground = Color(")
+                    .append(fg.getRed()).append(", ").append(fg.getGreen()).append(", ")
+                    .append(fg.getBlue()).append(")\n");
             }
             
             // Special properties
-            generateSpecialProperties(init, comp)
+            generateSpecialProperties(init, comp);
             
             // Add to container
-            init.append("        add(${comp.name})\n\n")
+            init.append("        add(").append(comp.getName()).append(")\n\n");
         }
         
-        init.append("    }\n\n")
-        return init.toString()
+        init.append("    }\n\n");
+        return init.toString();
     }
     
-    private void generateSpecialProperties(init: StringBuilder, comp: JantioComponent) {
-        when (comp.type) {
-            JantioComponent.ComponentType.COMBO_BOX, 
-            JantioComponent.ComponentType.LIST -> {
-                val items = comp.getProperty("items") as? Array<*>
-                items?.forEach { item ->
-                    init.append("        ${comp.name}.addItem(\"${escapeString(item.toString())}\")\n")
+    private void generateSpecialProperties(StringBuilder init, JantioComponent comp) {
+        switch (comp.getType()) {
+            case COMBO_BOX:
+            case LIST:
+                Object[] items = (Object[]) comp.getProperty("items");
+                if (items != null) {
+                    for (Object item : items) {
+                        init.append("        ").append(comp.getName()).append(".addItem(\"")
+                            .append(escapeString(item.toString())).append("\")\n");
+                    }
                 }
-            }
-            JantioComponent.ComponentType.SPINNER -> {
-                val min = comp.getProperty("min") as? Int ?: 0
-                val max = comp.getProperty("max") as? Int ?: 100
-                val value = comp.getProperty("value") as? Int ?: 0
-                init.append("        ${comp.name} = JSpinner(SpinnerNumberModel($value, $min, $max, 1))\n")
-            }
-            JantioComponent.ComponentType.SLIDER -> {
-                val min = comp.getProperty("min") as? Int ?: 0
-                val max = comp.getProperty("max") as? Int ?: 100
-                val value = comp.getProperty("value") as? Int ?: 50
-                val orientation = comp.getProperty("orientation") as? String ?: "HORIZONTAL"
-                val orientStr = if (orientation == "HORIZONTAL") "JSlider.HORIZONTAL" else "JSlider.VERTICAL"
-                init.append("        ${comp.name} = JSlider($orientStr, $min, $max, $value)\n")
-            }
-            JantioComponent.ComponentType.PROGRESS_BAR -> {
-                val min = comp.getProperty("min") as? Int ?: 0
-                val max = comp.getProperty("max") as? Int ?: 100
-                val value = comp.getProperty("value") as? Int ?: 0
-                val orientation = comp.getProperty("orientation") as? String ?: "HORIZONTAL"
-                val orientStr = if (orientation == "HORIZONTAL") "JProgressBar.HORIZONTAL" else "JProgressBar.VERTICAL"
-                init.append("        ${comp.name} = JProgressBar($orientStr, $min, $max)\n")
-                init.append("        ${comp.name}.value = $value\n")
-            }
-            JantioComponent.ComponentType.TABLE -> {
-                val columns = comp.getProperty("columns") as? Array<*>
+                break;
+            case SPINNER:
+                Integer min = (Integer) comp.getProperty("min");
+                Integer max = (Integer) comp.getProperty("max");
+                Integer value = (Integer) comp.getProperty("value");
+                if (min == null) min = 0;
+                if (max == null) max = 100;
+                if (value == null) value = 0;
+                init.append("        ").append(comp.getName()).append(" = JSpinner(SpinnerNumberModel(")
+                    .append(value).append(", ").append(min).append(", ").append(max).append(", 1))\n");
+                break;
+            case SLIDER:
+                Integer sMin = (Integer) comp.getProperty("min");
+                Integer sMax = (Integer) comp.getProperty("max");
+                Integer sValue = (Integer) comp.getProperty("value");
+                String orientation = (String) comp.getProperty("orientation");
+                if (sMin == null) sMin = 0;
+                if (sMax == null) sMax = 100;
+                if (sValue == null) sValue = 50;
+                if (orientation == null) orientation = "HORIZONTAL";
+                String orientStr = orientation.equals("HORIZONTAL") ? "JSlider.HORIZONTAL" : "JSlider.VERTICAL";
+                init.append("        ").append(comp.getName()).append(" = JSlider(")
+                    .append(orientStr).append(", ").append(sMin).append(", ").append(sMax).append(", ")
+                    .append(sValue).append(")\n");
+                break;
+            case PROGRESS_BAR:
+                Integer pMin = (Integer) comp.getProperty("min");
+                Integer pMax = (Integer) comp.getProperty("max");
+                Integer pValue = (Integer) comp.getProperty("value");
+                String pbOrientation = (String) comp.getProperty("orientation");
+                if (pMin == null) pMin = 0;
+                if (pMax == null) pMax = 100;
+                if (pValue == null) pValue = 0;
+                if (pbOrientation == null) pbOrientation = "HORIZONTAL";
+                String pbOrientStr = pbOrientation.equals("HORIZONTAL") ? "JProgressBar.HORIZONTAL" : "JProgressBar.VERTICAL";
+                init.append("        ").append(comp.getName()).append(" = JProgressBar(")
+                    .append(pbOrientStr).append(", ").append(pMin).append(", ").append(pMax).append(")\n");
+                init.append("        ").append(comp.getName()).append(".value = ").append(pValue).append("\n");
+                break;
+            case TABLE:
+                Object[] columns = (Object[]) comp.getProperty("columns");
                 if (columns != null) {
-                    val colStr = columns.joinToString(", ") { "\"$it\"" }
-                    init.append("        val ${comp.name}Columns = arrayOf($colStr)\n")
-                    init.append("        ${comp.name} = JTable(DefaultTableModel(${comp.name}Columns, 0))\n")
+                    StringBuilder colStr = new StringBuilder();
+                    for (int i = 0; i < columns.length; i++) {
+                        if (i > 0) colStr.append(", ");
+                        colStr.append("\"").append(escapeString(columns[i].toString())).append("\"");
+                    }
+                    init.append("        val ").append(comp.getName()).append("Columns = arrayOf(")
+                        .append(colStr).append(")\n");
+                    init.append("        ").append(comp.getName()).append(" = JTable(DefaultTableModel(")
+                        .append(comp.getName()).append("Columns, 0))\n");
                 }
-            }
-            else -> {}
+                break;
+            default:
+                break;
         }
     }
     
-    private String generateEventHandlers(): String {
-        val handlers = StringBuilder()
-        val components = engine.components
+    private String generateEventHandlers() {
+        StringBuilder handlers = new StringBuilder();
+        List<JantioComponent> components = engine.getComponents();
         
-        for (comp in components) {
-            val clickHandler = comp.getEvent("actionPerformed")
-            if (!clickHandler.isNullOrEmpty()) {
-                handlers.append("        ${comp.name}.addActionListener { e ->\n")
-                handlers.append("            // TODO: Implement action\n")
-                handlers.append("            $clickHandler\n")
-                handlers.append("        }\n\n")
+        for (JantioComponent comp : components) {
+            String clickHandler = comp.getEvent("actionPerformed");
+            if (clickHandler != null && !clickHandler.isEmpty()) {
+                handlers.append("        ").append(comp.getName()).append(".addActionListener { e ->\n");
+                handlers.append("            // TODO: Implement action\n");
+                handlers.append("            ").append(clickHandler).append("\n");
+                handlers.append("        }\n\n");
             }
         }
         
-        return if (handlers.isNotEmpty()) {
-            "    // Event Handlers\n" + handlers.toString()
+        if (handlers.length() > 0) {
+            return "    // Event Handlers\n" + handlers.toString();
         } else {
-            ""
+            return "";
         }
     }
     
-    private String generateMainMethod(): String = buildString {
-        append("    companion object {\n")
-        append("        @JvmStatic\n")
-        append("        fun main(args: Array<String>) {\n")
-        append("            try {\n")
-        append("                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeel())\n")
-        append("            } catch (e: Exception) {\n")
-        append("                e.printStackTrace()\n")
-        append("            }\n")
-        append("            \n")
-        append("            SwingUtilities.invokeLater {\n")
-        append("                ${engine.projectName}().isVisible = true\n")
-        append("            }\n")
-        append("        }\n")
-        append("    }\n")
+    private String generateMainMethod() {
+        StringBuilder main = new StringBuilder();
+        main.append("    companion object {\n");
+        main.append("        @JvmStatic\n");
+        main.append("        fun main(args: Array<String>) {\n");
+        main.append("            try {\n");
+        main.append("                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeel())\n");
+        main.append("            } catch (e: Exception) {\n");
+        main.append("                e.printStackTrace()\n");
+        main.append("            }\n");
+        main.append("            \n");
+        main.append("            SwingUtilities.invokeLater {\n");
+        main.append("                ").append(engine.getProjectName()).append("().isVisible = true\n");
+        main.append("            }\n");
+        main.append("        }\n");
+        main.append("    }\n");
+        return main.toString();
     }
     
-    private String escapeString(str: String?): String {
-        if (str == null) return ""
+    private String escapeString(String str) {
+        if (str == null) return "";
         return str.replace("\\", "\\\\")
                   .replace("\"", "\\\"")
                   .replace("\n", "\\n")
                   .replace("\r", "\\r")
-                  .replace("\t", "\\t")
+                  .replace("\t", "\\t");
     }
 }
