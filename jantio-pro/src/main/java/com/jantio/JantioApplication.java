@@ -5,6 +5,7 @@ import com.jantio.core.model.JantioComponent;
 import com.jantio.ui.swing.SwingDesigner;
 
 import javax.swing.*;
+import java.awt.GraphicsEnvironment;
 
 /**
  * Jantio Application - Main entry point
@@ -20,7 +21,7 @@ public class JantioApplication {
         }
         
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeel());
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }
