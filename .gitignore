@@ -1,0 +1,38 @@
+```
+# Compiled files
+*.class
+*.o
+*.obj
+*.out
+
+# Build artifacts
+build/
+target/
+
+# Dependencies
+lib/
+libs/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+```
