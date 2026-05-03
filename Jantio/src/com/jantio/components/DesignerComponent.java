@@ -40,6 +40,12 @@ public class DesignerComponent {
             case TEXT_FIELD:
                 ((JTextField) component).setText("");
                 break;
+            case PASSWORD_FIELD:
+                ((JPasswordField) component).setText("");
+                break;
+            case FORMATTED_TEXT_FIELD:
+                ((JFormattedTextField) component).setText("");
+                break;
             case TEXT_AREA:
                 ((JTextArea) component).setText("");
                 ((JTextArea) component).setRows(3);
@@ -59,6 +65,12 @@ public class DesignerComponent {
                 JComboBox<String> comboBox = new JComboBox<>(new String[]{"Item 1", "Item 2", "Item 3"});
                 component = comboBox;
                 break;
+            case LIST:
+                JList<String> list = new JList<>(new String[]{"Item 1", "Item 2", "Item 3"});
+                component = new JScrollPane(list);
+                width = 150;
+                height = 80;
+                break;
             case PANEL:
                 component.setBackground(new Color(240, 240, 240));
                 width = 200;
@@ -74,6 +86,38 @@ public class DesignerComponent {
                 break;
             case SPINNER:
                 ((JSpinner) component).setValue(0);
+                break;
+            case SEPARATOR:
+                ((JSeparator) component).setOrientation(JSeparator.HORIZONTAL);
+                width = 150;
+                height = 10;
+                break;
+            case TABBED_PANE:
+                JTabbedPane tabbedPane = new JTabbedPane();
+                tabbedPane.addTab("Tab 1", new JPanel());
+                tabbedPane.addTab("Tab 2", new JPanel());
+                component = tabbedPane;
+                width = 200;
+                height = 150;
+                break;
+            case TOOL_BAR:
+                JToolBar toolBar = new JToolBar();
+                toolBar.add(new JButton("Btn1"));
+                toolBar.add(new JButton("Btn2"));
+                component = toolBar;
+                width = 150;
+                height = 40;
+                break;
+            case SCROLL_PANE:
+                JPanel dummyPanel = new JPanel();
+                dummyPanel.setPreferredSize(new Dimension(300, 200));
+                component = new JScrollPane(dummyPanel);
+                width = 200;
+                height = 150;
+                break;
+            case COLOR_CHOOSER:
+                width = 200;
+                height = 100;
                 break;
         }
         
@@ -204,6 +248,13 @@ public class DesignerComponent {
                 code.append(String.format("JTextField %s = new JTextField(\"%s\");%n", 
                     variableName, ((JTextField) component).getText()));
                 break;
+            case PASSWORD_FIELD:
+                code.append(String.format("JPasswordField %s = new JPasswordField(\"%s\");%n", 
+                    variableName, ((JPasswordField) component).getPassword() != null ? new String(((JPasswordField) component).getPassword()) : ""));
+                break;
+            case FORMATTED_TEXT_FIELD:
+                code.append(String.format("JFormattedTextField %s = new JFormattedTextField();%n", variableName));
+                break;
             case TEXT_AREA:
                 JTextArea textArea = (JTextArea) ((JScrollPane) component).getViewport().getView();
                 code.append(String.format("JTextArea %s = new JTextArea(\"%s\");%n", 
@@ -233,6 +284,19 @@ public class DesignerComponent {
                 code.append(String.format("JComboBox<String> %s = new JComboBox<>(%sItems);%n", 
                     variableName, variableName));
                 break;
+            case LIST:
+                @SuppressWarnings("unchecked")
+                JList<String> list = (JList<String>) ((JScrollPane) component).getViewport().getView();
+                ListModel<String> listModel = list.getModel();
+                code.append(String.format("String[] %sItems = {", variableName));
+                for (int i = 0; i < listModel.getSize(); i++) {
+                    if (i > 0) code.append(", ");
+                    code.append("\"").append(listModel.getElementAt(i)).append("\"");
+                }
+                code.append("};%n");
+                code.append(String.format("JList<String> %s = new JList<>(%sItems);%n", variableName, variableName));
+                code.append(String.format("JScrollPane %sScroll = new JScrollPane(%s);%n", variableName, variableName));
+                break;
             case PANEL:
                 code.append(String.format("JPanel %s = new JPanel();%n", variableName));
                 code.append(String.format("%s.setLayout(null);%n", variableName));
@@ -248,6 +312,26 @@ public class DesignerComponent {
                 break;
             case SPINNER:
                 code.append(String.format("JSpinner %s = new JSpinner();%n", variableName));
+                break;
+            case SEPARATOR:
+                code.append(String.format("JSeparator %s = new JSeparator(JSeparator.HORIZONTAL);%n", variableName));
+                break;
+            case TABBED_PANE:
+                code.append(String.format("JTabbedPane %s = new JTabbedPane();%n", variableName));
+                code.append(String.format("%s.addTab(\"Tab 1\", new JPanel());%n", variableName));
+                code.append(String.format("%s.addTab(\"Tab 2\", new JPanel());%n", variableName));
+                break;
+            case TOOL_BAR:
+                code.append(String.format("JToolBar %s = new JToolBar();%n", variableName));
+                code.append(String.format("%s.add(new JButton(\"Btn1\"));%n", variableName));
+                code.append(String.format("%s.add(new JButton(\"Btn2\"));%n", variableName));
+                break;
+            case SCROLL_PANE:
+                code.append(String.format("JPanel %sPanel = new JPanel();%n", variableName));
+                code.append(String.format("JScrollPane %s = new JScrollPane(%sPanel);%n", variableName, variableName));
+                break;
+            case COLOR_CHOOSER:
+                code.append(String.format("JColorChooser %s = new JColorChooser();%n", variableName));
                 break;
         }
         

@@ -28,14 +28,22 @@ public class ComponentPalette extends JPanel {
         componentTypes.add(ComponentType.BUTTON);
         componentTypes.add(ComponentType.LABEL);
         componentTypes.add(ComponentType.TEXT_FIELD);
+        componentTypes.add(ComponentType.PASSWORD_FIELD);
+        componentTypes.add(ComponentType.FORMATTED_TEXT_FIELD);
         componentTypes.add(ComponentType.TEXT_AREA);
         componentTypes.add(ComponentType.CHECK_BOX);
         componentTypes.add(ComponentType.RADIO_BUTTON);
         componentTypes.add(ComponentType.COMBO_BOX);
-        componentTypes.add(ComponentType.PANEL);
+        componentTypes.add(ComponentType.LIST);
         componentTypes.add(ComponentType.SLIDER);
         componentTypes.add(ComponentType.PROGRESS_BAR);
         componentTypes.add(ComponentType.SPINNER);
+        componentTypes.add(ComponentType.SEPARATOR);
+        componentTypes.add(ComponentType.TABBED_PANE);
+        componentTypes.add(ComponentType.TOOL_BAR);
+        componentTypes.add(ComponentType.SCROLL_PANE);
+        componentTypes.add(ComponentType.PANEL);
+        componentTypes.add(ComponentType.COLOR_CHOOSER);
     }
     
     private void initComponents() {
@@ -132,6 +140,23 @@ public class ComponentPalette extends JPanel {
                         g2d.setColor(new Color(150, 150, 170));
                         g2d.drawRect(x + 2, y + 10, 18, 8);
                         break;
+                    case PASSWORD_FIELD:
+                        g2d.setColor(new Color(60, 60, 70));
+                        g2d.fillRect(x + 2, y + 10, 18, 8);
+                        g2d.setColor(new Color(150, 150, 170));
+                        g2d.drawRect(x + 2, y + 10, 18, 8);
+                        g2d.fillOval(x + 5, y + 13, 2, 2);
+                        g2d.fillOval(x + 9, y + 13, 2, 2);
+                        g2d.fillOval(x + 13, y + 13, 2, 2);
+                        break;
+                    case FORMATTED_TEXT_FIELD:
+                        g2d.setColor(new Color(60, 60, 70));
+                        g2d.fillRect(x + 2, y + 10, 18, 8);
+                        g2d.setColor(new Color(150, 150, 170));
+                        g2d.drawRect(x + 2, y + 10, 18, 8);
+                        g2d.setFont(new Font("Monospaced", Font.PLAIN, 8));
+                        g2d.drawString("##", x + 4, y + 16);
+                        break;
                     case TEXT_AREA:
                         g2d.setColor(new Color(60, 60, 70));
                         g2d.fillRect(x + 2, y + 6, 18, 14);
@@ -162,6 +187,15 @@ public class ComponentPalette extends JPanel {
                         g2d.drawLine(x + 17, y + 12, x + 15, y + 15);
                         g2d.drawLine(x + 15, y + 15, x + 14, y + 15);
                         break;
+                    case LIST:
+                        g2d.setColor(new Color(60, 60, 70));
+                        g2d.fillRect(x + 2, y + 6, 18, 14);
+                        g2d.setColor(new Color(150, 150, 170));
+                        g2d.drawRect(x + 2, y + 6, 18, 14);
+                        g2d.drawLine(x + 4, y + 10, x + 16, y + 10);
+                        g2d.drawLine(x + 4, y + 13, x + 16, y + 13);
+                        g2d.drawLine(x + 4, y + 16, x + 12, y + 16);
+                        break;
                     case PANEL:
                         g2d.setColor(new Color(80, 80, 100));
                         g2d.fillRect(x + 2, y + 6, 18, 14);
@@ -187,6 +221,41 @@ public class ComponentPalette extends JPanel {
                         g2d.drawLine(x + 15, y + 9, x + 15, y + 13);
                         g2d.drawLine(x + 15, y + 9, x + 17, y + 11);
                         g2d.drawLine(x + 15, y + 13, x + 17, y + 11);
+                        break;
+                    case SEPARATOR:
+                        g2d.setColor(new Color(100, 100, 120));
+                        g2d.setStroke(new BasicStroke(2));
+                        g2d.drawLine(x + 2, y + 12, x + 20, y + 12);
+                        break;
+                    case TABBED_PANE:
+                        g2d.setColor(new Color(80, 80, 100));
+                        g2d.fillRect(x + 2, y + 8, 18, 12);
+                        g2d.setColor(new Color(60, 60, 70));
+                        g2d.fillRect(x + 4, y + 6, 6, 4);
+                        g2d.fillRect(x + 12, y + 6, 6, 4);
+                        break;
+                    case TOOL_BAR:
+                        g2d.setColor(new Color(70, 70, 90));
+                        g2d.fillRect(x + 2, y + 10, 18, 6);
+                        g2d.setColor(new Color(150, 150, 170));
+                        g2d.fillOval(x + 4, y + 11, 3, 3);
+                        g2d.fillOval(x + 9, y + 11, 3, 3);
+                        g2d.fillOval(x + 14, y + 11, 3, 3);
+                        break;
+                    case SCROLL_PANE:
+                        g2d.setColor(new Color(60, 60, 70));
+                        g2d.fillRect(x + 2, y + 6, 16, 14);
+                        g2d.setColor(new Color(100, 100, 120));
+                        g2d.fillRect(x + 16, y + 6, 4, 12);
+                        g2d.fillRect(x + 2, y + 18, 14, 2);
+                        break;
+                    case COLOR_CHOOSER:
+                        g2d.setColor(new Color(200, 100, 100));
+                        g2d.fillRect(x + 2, y + 8, 5, 5);
+                        g2d.setColor(new Color(100, 200, 100));
+                        g2d.fillRect(x + 8, y + 8, 5, 5);
+                        g2d.setColor(new Color(100, 100, 200));
+                        g2d.fillRect(x + 14, y + 8, 5, 5);
                         break;
                 }
                 
