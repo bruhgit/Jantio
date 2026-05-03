@@ -1,29 +1,57 @@
 ```
-# Compiled Java files
-*.class
-
-# JAR files
+# Compiled and build artifacts
 *.jar
+*.class
+*.o
+*.obj
+*.out
 
 # Dependencies
 lib/
 libs/
+dependency/
+dependencies/
 
 # Build directories
 build/
 target/
+dist/
 out/
 
-# IDE files
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
+.vscode/
 .idea/
 *.iml
 *.ipr
 *.iws
 
-# Logs
-*.log
+# Environment
+.env
+.env.local
+*.env.*
 
-# Temporary files
-*.tmp
-*.temp
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Python specific (if applicable)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+*.so
+*.egg-info/
+.eggs/
 ```

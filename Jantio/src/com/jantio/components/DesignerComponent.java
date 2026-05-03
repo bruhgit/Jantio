@@ -11,19 +11,29 @@ import java.util.UUID;
  */
 public class DesignerComponent {
     private String id;
+    private String name;
     private ComponentType type;
     private JComponent component;
     private int x, y, width, height;
+    private Color backgroundColor;
+    private Color foregroundColor;
+    private Font font;
+    private String tooltip;
     private Map<String, Object> properties;
     
     public DesignerComponent(ComponentType type) {
         this.id = UUID.randomUUID().toString();
+        this.name = type.getDefaultName();
         this.type = type;
         this.component = type.createInstance();
         this.x = 50;
         this.y = 50;
         this.width = 120;
         this.height = 40;
+        this.backgroundColor = null;
+        this.foregroundColor = null;
+        this.font = null;
+        this.tooltip = "";
         this.properties = new HashMap<>();
         
         initializeDefaults();
@@ -128,8 +138,79 @@ public class DesignerComponent {
         return id;
     }
     
+    public String getName() {
+        return name;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
     public ComponentType getType() {
         return type;
+    }
+    
+    public Color getBackgroundColor() {
+        return backgroundColor;
+    }
+    
+    public void setBackgroundColor(Color backgroundColor) {
+        this.backgroundColor = backgroundColor;
+        if (backgroundColor != null) {
+            component.setBackground(backgroundColor);
+        }
+    }
+    
+    public Color getForegroundColor() {
+        return foregroundColor;
+    }
+    
+    public void setForegroundColor(Color foregroundColor) {
+        this.foregroundColor = foregroundColor;
+        if (foregroundColor != null) {
+            component.setForeground(foregroundColor);
+        }
+    }
+    
+    public Font getFont() {
+        return font;
+    }
+    
+    public void setFont(Font font) {
+        this.font = font;
+        if (font != null) {
+            component.setFont(font);
+        }
+    }
+    
+    public String getTooltip() {
+        return tooltip;
+    }
+    
+    public void setTooltip(String tooltip) {
+        this.tooltip = tooltip;
+        component.setToolTipText(tooltip);
+    }
+    
+    public String getText() {
+        if (component instanceof AbstractButton) {
+            return ((AbstractButton) component).getText();
+        } else if (component instanceof JLabel) {
+            return ((JLabel) component).getText();
+        } else if (component instanceof JTextField) {
+            return ((JTextField) component).getText();
+        }
+        return "";
+    }
+    
+    public void setText(String text) {
+        if (component instanceof AbstractButton) {
+            ((AbstractButton) component).setText(text);
+        } else if (component instanceof JLabel) {
+            ((JLabel) component).setText(text);
+        } else if (component instanceof JTextField) {
+            ((JTextField) component).setText(text);
+        }
     }
     
     public JComponent getComponent() {
