@@ -5,6 +5,11 @@ import com.jantio.components.DesignerComponent;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,11 +21,91 @@ public class JantioDesigner extends JPanel {
     private List<DesignerComponent> components;
     private DesignerComponent selectedComponent;
     private PropertiesPanel propertiesPanel;
+    private JPopupMenu resizePopupMenu;
     
     public JantioDesigner(PropertiesPanel propertiesPanel) {
         this.propertiesPanel = propertiesPanel;
         this.components = new ArrayList<>();
         initComponents();
+        createResizePopupMenu();
+    }
+    
+    private void createResizePopupMenu() {
+        resizePopupMenu = new JPopupMenu();
+        
+        JMenuItem resizeSmall = new JMenuItem("Küçük Boyut (80x30)");
+        resizeSmall.addActionListener(e -> resizeSelected(80, 30));
+        resizePopupMenu.add(resizeSmall);
+        
+        JMenuItem resizeMedium = new JMenuItem("Orta Boyut (150x50)");
+        resizeMedium.addActionListener(e -> resizeSelected(150, 50));
+        resizePopupMenu.add(resizeMedium);
+        
+        JMenuItem resizeLarge = new JMenuItem("Büyük Boyut (250x80)");
+        resizeLarge.addActionListener(e -> resizeSelected(250, 80));
+        resizePopupMenu.add(resizeLarge);
+        
+        resizePopupMenu.addSeparator();
+        
+        JMenuItem customSize = new JMenuItem("Özel Boyut...");
+        customSize.addActionListener(e -> showCustomSizeDialog());
+        resizePopupMenu.add(customSize);
+    }
+    
+    private void resizeSelected(int width, int height) {
+        if (selectedComponent != null) {
+            selectedComponent.setBounds(
+                selectedComponent.getX(), 
+                selectedComponent.getY(), 
+                width, 
+                height
+            );
+            propertiesPanel.refreshProperties();
+            repaint();
+        }
+    }
+    
+    private void showCustomSizeDialog() {
+        if (selectedComponent == null) return;
+        
+        JTextField widthField = new JTextField(String.valueOf(selectedComponent.getWidth()), 10);
+        JTextField heightField = new JTextField(String.valueOf(selectedComponent.getHeight()), 10);
+        
+        JPanel panel = new JPanel(new GridLayout(2, 2, 5, 5));
+        panel.add(new JLabel("Genişlik:"));
+        panel.add(widthField);
+        panel.add(new JLabel("Yükseklik:"));
+        panel.add(heightField);
+        
+        int result = JOptionPane.showConfirmDialog(
+            this, 
+            panel, 
+            "Boyut Ayarla", 
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
+        );
+        
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                int width = Integer.parseInt(widthField.getText().trim());
+                int height = Integer.parseInt(heightField.getText().trim());
+                
+                if (width > 0 && height > 0) {
+                    selectedComponent.setBounds(
+                        selectedComponent.getX(), 
+                        selectedComponent.getY(), 
+                        width, 
+                        height
+                    );
+                    propertiesPanel.refreshProperties();
+                    repaint();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Boyutlar pozitif olmalıdır!", "Hata", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Geçersiz sayı formatı!", "Hata", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
     
     private void initComponents() {
@@ -29,23 +114,42 @@ public class JantioDesigner extends JPanel {
         setBorder(BorderFactory.createLineBorder(new Color(180, 180, 190), 1));
         
         // Mouse dinleyicileri
-        addMouseListener(new java.awt.event.MouseAdapter() {
+        addMouseListener(new MouseAdapter() {
             @Override
-            public void mousePressed(java.awt.event.MouseEvent e) {
+            public void mousePressed(MouseEvent e) {
                 handleMousePress(e);
+                checkRightClick(e);
             }
         });
         
-        addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+        addMouseMotionListener(new MouseMotionAdapter() {
             @Override
-            public void mouseDragged(java.awt.event.MouseEvent e) {
+            public void mouseDragged(MouseEvent e) {
                 handleMouseDrag(e);
             }
         });
     }
     
+    private void checkRightClick(MouseEvent e) {
+        if (e.isPopupTrigger()) {
+            Component clickedComponent = findComponentAtPoint(e.getPoint());
+            if (clickedComponent != null) {
+                DesignerComponent designerComp = findDesignerComponent(clickedComponent);
+                if (designerComp != null) {
+                    selectComponent(designerComp);
+                    resizePopupMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+        }
+    }
+    
     public void addComponent(ComponentType type) {
         DesignerComponent designerComp = new DesignerComponent(type);
+        
+        // Çakışma kontrolü - yeni bileşeni boş bir yere yerleştir
+        Point newPosition = findNonOverlappingPosition(designerComp);
+        designerComp.setBounds(newPosition.x, newPosition.y, designerComp.getWidth(), designerComp.getHeight());
+        
         components.add(designerComp);
         add(designerComp.getComponent());
         
@@ -56,7 +160,81 @@ public class JantioDesigner extends JPanel {
         repaint();
     }
     
-    private void handleMousePress(java.awt.event.MouseEvent e) {
+    /**
+     * Bileşenler için çakışmayan pozisyon bulur
+     */
+    private Point findNonOverlappingPosition(DesignerComponent newComp) {
+        int startX = 50;
+        int startY = 50;
+        int step = 20;
+        int maxX = getWidth() - newComp.getWidth();
+        int maxY = getHeight() - newComp.getHeight();
+        
+        // Mevcut tüm pozisyonları dene
+        for (int x = startX; x <= maxX; x += step) {
+            for (int y = startY; y <= maxY; y += step) {
+                Rectangle newRect = new Rectangle(x, y, newComp.getWidth(), newComp.getHeight());
+                boolean overlaps = false;
+                
+                for (DesignerComponent existing : components) {
+                    Rectangle existingRect = existing.getComponent().getBounds();
+                    if (newRect.intersects(existingRect)) {
+                        overlaps = true;
+                        break;
+                    }
+                }
+                
+                if (!overlaps) {
+                    return new Point(x, y);
+                }
+            }
+        }
+        
+        // Hiç boş yer yoksa, en alta yerleştir
+        int lowestY = startY;
+        for (DesignerComponent comp : components) {
+            int bottomY = comp.getY() + comp.getHeight() + step;
+            if (bottomY > lowestY) {
+                lowestY = bottomY;
+            }
+        }
+        
+        return new Point(startX, lowestY);
+    }
+    
+    /**
+     * Taşıma sırasında çakışmayı önle
+     */
+    private void preventOverlapWhileDragging(DesignerComponent comp, int newX, int newY) {
+        Rectangle testRect = new Rectangle(newX, newY, comp.getWidth(), comp.getHeight());
+        
+        for (DesignerComponent existing : components) {
+            if (existing == comp) continue;
+            
+            Rectangle existingRect = existing.getComponent().getBounds();
+            if (testRect.intersects(existingRect)) {
+                // Çakışma var - bileşeni it
+                if (newX < existing.getX()) {
+                    newX = existing.getX() - comp.getWidth() - 5;
+                } else if (newX + comp.getWidth() > existing.getX() + existing.getWidth()) {
+                    newX = existing.getX() + existing.getWidth() + 5;
+                }
+                
+                if (newY < existing.getY()) {
+                    newY = existing.getY() - comp.getHeight() - 5;
+                } else if (newY + comp.getHeight() > existing.getY() + existing.getHeight()) {
+                    newY = existing.getY() + existing.getHeight() + 5;
+                }
+                
+                // Yeni pozisyonu tekrar kontrol et
+                testRect.setLocation(newX, newY);
+            }
+        }
+        
+        comp.setBounds(newX, newY, comp.getWidth(), comp.getHeight());
+    }
+    
+    private void handleMousePress(MouseEvent e) {
         Component clickedComponent = findComponentAtPoint(e.getPoint());
         
         if (clickedComponent != null) {
@@ -69,10 +247,11 @@ public class JantioDesigner extends JPanel {
         }
     }
     
-    private void handleMouseDrag(java.awt.event.MouseEvent e) {
+    private void handleMouseDrag(MouseEvent e) {
         if (selectedComponent != null) {
             Point p = e.getPoint();
-            selectedComponent.setBounds(p.x, p.y, selectedComponent.getWidth(), selectedComponent.getHeight());
+            // Çakışma önleme ile taşı
+            preventOverlapWhileDragging(selectedComponent, p.x, p.y);
             propertiesPanel.refreshProperties();
             repaint();
         }
