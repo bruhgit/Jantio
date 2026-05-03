@@ -17,7 +17,15 @@ public enum ComponentType {
     PANEL("Panel", JPanel.class),
     SLIDER("Slider", JSlider.class),
     PROGRESS_BAR("ProgressBar", JProgressBar.class),
-    SPINNER("Spinner", JSpinner.class);
+    SPINNER("Spinner", JSpinner.class),
+    SEPARATOR("Separator", JSeparator.class),
+    TABBED_PANE("TabbedPane", JTabbedPane.class),
+    TOOL_BAR("ToolBar", JToolBar.class),
+    LIST("List", JList.class),
+    SCROLL_PANE("ScrollPane", JScrollPane.class),
+    PASSWORD_FIELD("PasswordField", JPasswordField.class),
+    FORMATTED_TEXT_FIELD("FormattedTextField", JFormattedTextField.class),
+    COLOR_CHOOSER("ColorChooser", JColorChooser.class);
     
     private final String displayName;
     private final Class<?> swingClass;
